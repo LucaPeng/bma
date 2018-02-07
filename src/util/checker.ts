@@ -1,4 +1,4 @@
-import {configManager} from './config-manager';
+import { configManager } from './config-manager';
 const isGitClean = require('is-git-clean');
 
 /**
@@ -16,3 +16,4 @@ export async function checkIsWorkSpaceClean() {
   const clean = await isGitClean();
   return clean;
 }
+

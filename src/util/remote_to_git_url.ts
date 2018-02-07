@@ -13,7 +13,7 @@ const suffixMap: IStringObj = {
   'branches': 'branches',
   'pr': 'pull-requests',
   'create-pr': 'compare/commits'
-}
+};
 
 export default function (remote: string, gitServe: string = 'sankuai', type: string = 'browse'): string {
   const urlObj = urlParse(remote, true);

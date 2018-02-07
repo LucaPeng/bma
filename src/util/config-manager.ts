@@ -21,7 +21,7 @@ interface BMAConfig {
   branchPrefix: BaseConfig
 }
 
-let config: BMAConfig = {
+const config: BMAConfig = {
   enforcePRtoMaster: true,
   branch: {
     master: 'master',

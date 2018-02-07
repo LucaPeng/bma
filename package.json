@@ -5,11 +5,15 @@
   "main": "dist/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc"
+    "build": "tsc",
+    "precommit": "lint-staged"
   },
   "keywords": [
     "branch",
     "management"
+  ],
+  "files": [
+    "dist/"
   ],
   "author": "luca.Peng",
   "license": "ISC",
@@ -27,6 +31,14 @@
     "url-parse": "^1.2.0"
   },
   "devDependencies": {
-    "typescript": "^2.7.1"
+    "@waimai/eslint-config-ofe": "0.0.5",
+    "eslint": "^4.17.0",
+    "husky": "^0.14.3",
+    "lint-staged": "^6.0.0",
+    "typescript": "^2.7.1",
+    "typescript-eslint-parser": "^12.0.0"
+  },
+  "lint-staged": {
+    "src/**/*.{js,ts}": "eslint"
   }
 }

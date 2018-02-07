@@ -3,8 +3,8 @@
  * @author lucaPeng
  */
 
-import {BranchTypes, configManager} from './util/config-manager';
-import {checkIsMajorBranch, checkIsWorkSpaceClean} from './util/checker';
+import { BranchTypes, configManager } from './util/config-manager';
+import { checkIsMajorBranch, checkIsWorkSpaceClean } from './util/checker';
 import remoteToGitURL from './util/remote_to_git_url';
 const currentBranch = require('git-branch');
 const opn = require('opn');
@@ -63,7 +63,7 @@ export default {
             return true;
           });
         }
-      } catch(err) {
+      } catch (err) {
         console.log(err);
         return err;
       }
@@ -127,13 +127,13 @@ export default {
         envBranch = tempBranchName;
       }
     }
-    
+
     // 检查当前分支是否是主干分支
     if (await checkIsMajorBranch(branchName)) {
       console.log(chalk.red('current branch is a major branch, not a feature branch, please check'));
       process.exit(1);
     }
-    
+
     // 检查当前环境是否有未提交的代码
     if (!await checkIsWorkSpaceClean()) {
       console.log(chalk.red('uncommitted changes found in current branch, please commit first'));
@@ -142,7 +142,7 @@ export default {
 
     // 合并master分支到当前分支
     if (config.mergeMaster) {
-      await this.mergeMasterToBranch(branchName, {silence: config.silence});
+      await this.mergeMasterToBranch(branchName, { silence: config.silence });
     }
 
     // 如果禁止直接提交代码到master
@@ -150,7 +150,7 @@ export default {
     if (envBranch === 'master' && enforcePRtoMaster) {
       const remoteOriginUrl = await gitRemoteOriginUrl();
       const gitUrl = remoteToGitURL(remoteOriginUrl, 'git.sankuai', 'create-pr');
-      console.log(chalk.bgYellow(`禁止直接合并代码到master分支，请提交PR`));
+      console.log(chalk.bgYellow('禁止直接合并代码到master分支，请提交PR'));
       console.log(`地址：${gitUrl}`);
       opn(gitUrl);
       process.exit(0);
@@ -179,7 +179,7 @@ export default {
         res && console.log(res);
         return res;
       });
-    } catch(err) {
+    } catch (err) {
       console.log(err);
       process.exit(1);
     }
