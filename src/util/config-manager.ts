@@ -31,10 +31,10 @@ const config: BMAConfig = {
     beta: 'beta'
   },
   branchPrefix: {
-    feature: 'feature',
-    bugfix: 'bugfix',
-    hotfix: 'hotfix',
-    custom: 'custom'
+    feature: 'feature/',
+    bugfix: 'bugfix/',
+    hotfix: 'hotfix/',
+    custom: 'custom/'
   }
 };
 

@@ -27,14 +27,14 @@ exports.default = {
             const prefix = config_manager_1.configManager.getPrefix(type);
             if (!prefix) {
                 console.log(chalk_1.default.bgYellow(`no prefix specified for ${type} branch`));
-                process.exit(1);
+                return false;
             }
             else {
                 const branchName = `${prefix}-${id}`;
                 const curBranchName = currentBranch.sync();
                 if (yield checker_1.checkIsWorkSpaceClean()) {
                     console.log(chalk_1.default.red('uncommitted changes found in current branch, please commit first'));
-                    process.exit(1);
+                    return false;
                 }
                 try {
                     if (curBranchName !== 'master') {
@@ -102,27 +102,27 @@ exports.default = {
                 }).then((res) => {
                     logger(chalk_1.default.green(`推送${branchName}分支到远程代码仓库`));
                     logger(res);
-                    return res;
+                    return true;
                 });
             }
             catch (err) {
                 console.log(err);
-                process.exit(1);
+                return false;
             }
         });
     },
-    mergeBranchToEnv(branchName, env, config) {
+    mergeToMainBranch(branchName, mainBranch, config) {
         return __awaiter(this, void 0, void 0, function* () {
             let envBranch;
             if (config.forceEnvBranch) {
                 envBranch = config.forceEnvBranch;
             }
             else {
-                const tempBranchName = yield config_manager_1.configManager.getBranchName(env);
+                const tempBranchName = yield config_manager_1.configManager.getBranchName(mainBranch);
                 if (!tempBranchName) {
                     envBranch = '';
-                    console.log(chalk_1.default.red(`${env}发布环境未配置对应的branch`));
-                    process.exit(1);
+                    console.log(chalk_1.default.red(`${mainBranch}分支类型未配置对应的branch`));
+                    return false;
                 }
                 else {
                     envBranch = tempBranchName;
@@ -130,11 +130,11 @@ exports.default = {
             }
             if (yield checker_1.checkIsMajorBranch(branchName)) {
                 console.log(chalk_1.default.red('current branch is a major branch, not a feature branch, please check'));
-                process.exit(1);
+                return false;
             }
             if (!(yield checker_1.checkIsWorkSpaceClean())) {
                 console.log(chalk_1.default.red('uncommitted changes found in current branch, please commit first'));
-                process.exit(1);
+                return false;
             }
             if (config.mergeMaster) {
                 yield this.mergeMasterToBranch(branchName, { silence: config.silence });
@@ -143,14 +143,13 @@ exports.default = {
             if (envBranch === 'master' && enforcePRtoMaster) {
                 const remoteOriginUrl = yield gitRemoteOriginUrl();
                 const gitUrl = remote_to_git_url_1.default(remoteOriginUrl, 'git.sankuai', 'create-pr');
-                console.log(chalk_1.default.bgYellow(`禁止直接合并代码到master分支，请提交PR`));
+                console.log(chalk_1.default.bgYellow('禁止直接合并代码到master分支，请提交PR'));
                 console.log(`地址：${gitUrl}`);
                 opn(gitUrl);
-                process.exit(0);
+                return false;
             }
-            let res;
             try {
-                res = yield git.checkout(envBranch).then((res) => {
+                return yield git.checkout(envBranch).then((res) => {
                     console.log(chalk_1.default.green(`切换到${envBranch}分支`));
                     res && console.log(res);
                     return git.pull();
@@ -169,14 +168,13 @@ exports.default = {
                 }).then((res) => {
                     console.log(chalk_1.default.green(`checkout开发分支${envBranch}到workspace`));
                     res && console.log(res);
-                    return res;
+                    return true;
                 });
             }
             catch (err) {
                 console.log(err);
-                process.exit(1);
+                return false;
             }
-            return res;
         });
     },
     setConfig: config_manager_1.configManager.setConfig,

@@ -7,7 +7,7 @@ var BranchTypes;
     BranchTypes[BranchTypes["hotfix"] = 3] = "hotfix";
     BranchTypes[BranchTypes["custom"] = 4] = "custom";
 })(BranchTypes = exports.BranchTypes || (exports.BranchTypes = {}));
-let config = {
+const config = {
     enforcePRtoMaster: true,
     branch: {
         master: 'master',
@@ -17,10 +17,10 @@ let config = {
         beta: 'beta'
     },
     branchPrefix: {
-        feature: 'feature',
-        bugfix: 'bugfix',
-        hotfix: 'hotfix',
-        custom: 'custom'
+        feature: 'feature/',
+        bugfix: 'bugfix/',
+        hotfix: 'hotfix/',
+        custom: 'custom/'
     }
 };
 exports.configManager = {

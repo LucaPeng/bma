@@ -24,13 +24,13 @@ export default {
     const prefix = configManager.getPrefix(type);
     if (!prefix) {
       console.log(chalk.bgYellow(`no prefix specified for ${type} branch`));
-      process.exit(1);
+      return false;
     } else {
       const branchName = `${prefix}-${id}`;
       const curBranchName = currentBranch.sync();
       if (await checkIsWorkSpaceClean()) {
         console.log(chalk.red('uncommitted changes found in current branch, please commit first'));
-        process.exit(1);
+        return false;
       }
       try {
         if (curBranchName !== 'master') {
@@ -99,30 +99,30 @@ export default {
       }).then((res: any) => {
         logger(chalk.green(`推送${branchName}分支到远程代码仓库`));
         logger(res);
-        return res;
+        return true;
       });
     } catch (err) {
       console.log(err);
-      process.exit(1);
+      return false;
     }
   },
 
   /**
-   * 合并分支到特定环境对应的主干分支
+   * 合并分支到特定的主干分支
    */
-  async mergeBranchToEnv(branchName: string, env: string, config: {mergeMaster: boolean, forceEnvBranch?: string, silence?: boolean}) {
+  async mergeToMainBranch(branchName: string, mainBranch: string, config: {mergeMaster: boolean, forceEnvBranch?: string, silence?: boolean}) {
     // 获取部署环境对应的分支名
     let envBranch: string;
     if (config.forceEnvBranch) {
       // 如果指定的分支名
       envBranch = config.forceEnvBranch;
     } else {
-      const tempBranchName = await configManager.getBranchName(env);
+      const tempBranchName = await configManager.getBranchName(mainBranch);
       // 检查是否配置了该环境对应的主干分支
       if (!tempBranchName) {
         envBranch = '';
-        console.log(chalk.red(`${env}发布环境未配置对应的branch`));
-        process.exit(1);
+        console.log(chalk.red(`${mainBranch}分支类型未配置对应的branch`));
+        return false;
       } else {
         envBranch = tempBranchName;
       }
@@ -131,13 +131,13 @@ export default {
     // 检查当前分支是否是主干分支
     if (await checkIsMajorBranch(branchName)) {
       console.log(chalk.red('current branch is a major branch, not a feature branch, please check'));
-      process.exit(1);
+      return false;
     }
 
     // 检查当前环境是否有未提交的代码
     if (!await checkIsWorkSpaceClean()) {
       console.log(chalk.red('uncommitted changes found in current branch, please commit first'));
-      process.exit(1);
+      return false;
     }
 
     // 合并master分支到当前分支
@@ -153,12 +153,11 @@ export default {
       console.log(chalk.bgYellow('禁止直接合并代码到master分支，请提交PR'));
       console.log(`地址：${gitUrl}`);
       opn(gitUrl);
-      process.exit(0);
+      return false;
     }
 
-    let res;
     try {
-      res = await git.checkout(envBranch).then((res: any) => {
+      return await git.checkout(envBranch).then((res: any) => {
         console.log(chalk.green(`切换到${envBranch}分支`));
         res && console.log(res);
         return git.pull();
@@ -177,13 +176,12 @@ export default {
       }).then((res: any) => {
         console.log(chalk.green(`checkout开发分支${envBranch}到workspace`));
         res && console.log(res);
-        return res;
+        return true;
       });
     } catch (err) {
       console.log(err);
-      process.exit(1);
+      return false;
     }
-    return res;
   },
   setConfig: configManager.setConfig,
   setEnforcePRtoMaster: configManager.setEnforcePRtoMaster
