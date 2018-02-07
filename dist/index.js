@@ -18,12 +18,16 @@ const gitP = require('simple-git/promise');
 const chalk_1 = require("chalk");
 const git = gitP(process.cwd());
 const log = (silence) => (content) => {
-    silence && content && console.log(content);
+    !silence && content && console.log(content);
 };
 exports.default = {
     newBranch(type = config_manager_1.BranchTypes.feature, id, config) {
         return __awaiter(this, void 0, void 0, function* () {
             const logger = log(config.silence || false);
+            if (!(yield git.checkIsRepo())) {
+                console.log(chalk_1.default.red('current project has not been initialized as a git repo, please check'));
+                return false;
+            }
             const prefix = config_manager_1.configManager.getPrefix(type);
             if (!prefix) {
                 console.log(chalk_1.default.bgYellow(`no prefix specified for ${type} branch`));
@@ -78,6 +82,10 @@ exports.default = {
     mergeMasterToBranch(branchName, config) {
         return __awaiter(this, void 0, void 0, function* () {
             const logger = log(config.silence || false);
+            if (!(yield git.checkIsRepo())) {
+                console.log(chalk_1.default.red('current project has not been initialized as a git repo, please check'));
+                return false;
+            }
             try {
                 return yield git.pull().then((res) => {
                     logger(chalk_1.default.green('拉取&更新当前开发分支'));
@@ -113,6 +121,11 @@ exports.default = {
     },
     mergeToMainBranch(branchName, mainBranch, config) {
         return __awaiter(this, void 0, void 0, function* () {
+            const logger = log(config.silence || false);
+            if (!(yield git.checkIsRepo())) {
+                console.log(chalk_1.default.red('current project has not been initialized as a git repo, please check'));
+                return false;
+            }
             let envBranch;
             if (config.forceEnvBranch) {
                 envBranch = config.forceEnvBranch;
@@ -150,24 +163,24 @@ exports.default = {
             }
             try {
                 return yield git.checkout(envBranch).then((res) => {
-                    console.log(chalk_1.default.green(`切换到${envBranch}分支`));
-                    res && console.log(res);
+                    logger(chalk_1.default.green(`切换到${envBranch}分支`));
+                    logger(res);
                     return git.pull();
                 }).then((res) => {
-                    console.log(chalk_1.default.green(`更新${envBranch}分支`));
-                    res && console.log(res);
+                    logger(chalk_1.default.green(`更新${envBranch}分支`));
+                    logger(res);
                     return git.merge([branchName]);
                 }).then((res) => {
-                    console.log(chalk_1.default.green(`合并${branchName}分支到${envBranch}分支`));
-                    res && console.log(res);
+                    logger(chalk_1.default.green(`合并${branchName}分支到${envBranch}分支`));
+                    logger(res);
                     return git.push('origin', envBranch);
                 }).then((res) => {
-                    console.log(chalk_1.default.green(`推送${envBranch}到git仓库`));
-                    res && console.log(res);
+                    logger(chalk_1.default.green(`推送${envBranch}到git仓库`));
+                    logger(res);
                     return git.checkout(branchName);
                 }).then((res) => {
-                    console.log(chalk_1.default.green(`checkout开发分支${envBranch}到workspace`));
-                    res && console.log(res);
+                    logger(chalk_1.default.green(`checkout开发分支${envBranch}到workspace`));
+                    logger(res);
                     return true;
                 });
             }

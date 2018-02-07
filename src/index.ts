@@ -15,36 +15,55 @@ import chalk from 'chalk';
 const git = gitP(process.cwd());
 // 日志打印
 const log = (silence: boolean) => (content: any) => {
-  silence && content && console.log(content);
+  !silence && content && console.log(content);
 };
 
 export default {
+  /**
+   * 新建任务分支
+   * @param type 分支类型
+   * @param id 分支id 或 描述
+   * @param config {silence: 是否静默执行}
+   */
   async newBranch(type: BranchTypes = BranchTypes.feature, id: number | string, config: {silence?: boolean}) {
     const logger = log(config.silence || false);
+
+    // 合法git仓库检查
+    if (!await git.checkIsRepo()) {
+      console.log(chalk.red('current project has not been initialized as a git repo, please check'));
+      return false;
+    }
+
     const prefix = configManager.getPrefix(type);
     if (!prefix) {
+      // prefix 设置检查
       console.log(chalk.bgYellow(`no prefix specified for ${type} branch`));
       return false;
     } else {
       const branchName = `${prefix}-${id}`;
       const curBranchName = currentBranch.sync();
+      // workspace 无未提交代码检查
       if (await checkIsWorkSpaceClean()) {
         console.log(chalk.red('uncommitted changes found in current branch, please commit first'));
         return false;
       }
       try {
+        // 若不在master分支，切换到master分支
         if (curBranchName !== 'master') {
           await git.checkout('master').then((res: any) => {
             logger(chalk.green('切换到master分支'));
             logger(res);
           });
         }
+        // 更新master分支
         await git.pull().then((res: any) => {
           logger(chalk.green('拉取&更新master分支'));
           logger(res);
         });
+        // 检查新建分支是否已经存在
         const localBranches = await git.branchLocal();
         if (localBranches && localBranches.branches && localBranches.branches[branchName]) {
+          // 如果已经存在，切到对应分支
           logger(chalk.green('任务分支已存在，checkout到对应分支'));
           return await git.checkout(branchName).then((res: any) => {
             logger(chalk.green(`已切换到${branchName}分支`));
@@ -52,6 +71,7 @@ export default {
             return true;
           });
         } else {
+          // 如果不存在，新建分支，并推送到remote
           return await git.checkoutLocalBranch(branchName).then((res: any) => {
             logger(chalk.green(`已创建并切换到${branchName}分支`));
             logger(res);
@@ -75,6 +95,13 @@ export default {
    */
   async mergeMasterToBranch(branchName: string, config: {silence?: boolean}) {
     const logger = log(config.silence || false);
+    
+    // 合法git仓库检查
+    if (!await git.checkIsRepo()) {
+      console.log(chalk.red('current project has not been initialized as a git repo, please check'));
+      return false;
+    }
+    
     try {
       return await git.pull().then((res: any) => {
         logger(chalk.green('拉取&更新当前开发分支'));
@@ -111,6 +138,15 @@ export default {
    * 合并分支到特定的主干分支
    */
   async mergeToMainBranch(branchName: string, mainBranch: string, config: {mergeMaster: boolean, forceEnvBranch?: string, silence?: boolean}) {
+    
+    const logger = log(config.silence || false);
+    
+    // 合法git仓库检查
+    if (!await git.checkIsRepo()) {
+      console.log(chalk.red('current project has not been initialized as a git repo, please check'));
+      return false;
+    }
+    
     // 获取部署环境对应的分支名
     let envBranch: string;
     if (config.forceEnvBranch) {
@@ -156,26 +192,27 @@ export default {
       return false;
     }
 
+    // 执行代码合并和推送
     try {
       return await git.checkout(envBranch).then((res: any) => {
-        console.log(chalk.green(`切换到${envBranch}分支`));
-        res && console.log(res);
+        logger(chalk.green(`切换到${envBranch}分支`));
+        logger(res);
         return git.pull();
       }).then((res: any) => {
-        console.log(chalk.green(`更新${envBranch}分支`));
-        res && console.log(res);
+        logger(chalk.green(`更新${envBranch}分支`));
+        logger(res);
         return git.merge([branchName]);
       }).then((res: any) => {
-        console.log(chalk.green(`合并${branchName}分支到${envBranch}分支`));
-        res && console.log(res);
+        logger(chalk.green(`合并${branchName}分支到${envBranch}分支`));
+        logger(res);
         return git.push('origin', envBranch);
       }).then((res: any) => {
-        console.log(chalk.green(`推送${envBranch}到git仓库`));
-        res && console.log(res);
+        logger(chalk.green(`推送${envBranch}到git仓库`));
+        logger(res);
         return git.checkout(branchName);
       }).then((res: any) => {
-        console.log(chalk.green(`checkout开发分支${envBranch}到workspace`));
-        res && console.log(res);
+        logger(chalk.green(`checkout开发分支${envBranch}到workspace`));
+        logger(res);
         return true;
       });
     } catch (err) {
