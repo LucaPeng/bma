@@ -4,17 +4,17 @@ This is used to manage your git branches automatically and follow some specs.
 
 ### Branch Specs
 
-#### Main Branches
+#### Env Branches
 
-main branches are used to deploy, which are not editable. You can only merge to these branches, solve conflict and push.
+env branches are used to deploy, which are not editable. You can only merge to these branches, solve conflict and push.
 
-* master: master
+* online: master
 * qa: qa
 * dev: dev
 * stage: stage
 * beta: beta
 
-what's more, you can config their truth name through 
+what's more, you can modify the branch name for envs through 
 
 `setConfig('branch', {dev: 'develop'})`
 

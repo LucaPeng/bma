@@ -10,17 +10,17 @@ var BranchTypes;
 const config = {
     enforcePRtoMaster: true,
     branch: {
-        master: 'master',
+        online: 'master',
         dev: 'dev',
         qa: 'qa',
         stage: 'master',
         beta: 'beta'
     },
     branchPrefix: {
-        feature: 'feature/',
-        bugfix: 'bugfix/',
-        hotfix: 'hotfix/',
-        custom: 'custom/'
+        [BranchTypes.feature]: 'feature/',
+        [BranchTypes.bugfix]: 'bugfix/',
+        [BranchTypes.hotfix]: 'hotfix/',
+        [BranchTypes.custom]: 'custom/'
     }
 };
 exports.configManager = {
