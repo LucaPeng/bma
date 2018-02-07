@@ -20,7 +20,7 @@ const git = gitP(process.cwd());
 const log = (silence) => (content) => {
     !silence && content && console.log(content);
 };
-exports.default = {
+module.exports = {
     newBranch(type = config_manager_1.BranchTypes.feature, id, config) {
         return __awaiter(this, void 0, void 0, function* () {
             const logger = log(config.silence || false);

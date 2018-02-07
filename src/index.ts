@@ -18,7 +18,7 @@ const log = (silence: boolean) => (content: any) => {
   !silence && content && console.log(content);
 };
 
-export default {
+module.exports = {
   /**
    * 新建任务分支
    * @param type 分支类型

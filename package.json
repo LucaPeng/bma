@@ -13,7 +13,8 @@
     "management"
   ],
   "files": [
-    "dist/"
+    "dist/",
+    "index.d.ts"
   ],
   "author": "luca.Peng",
   "license": "ISC",
