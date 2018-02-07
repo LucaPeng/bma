@@ -1,6 +1,6 @@
 {
   "name": "bma",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "branch manage abstract",
   "main": "dist/index.js",
   "scripts": {
