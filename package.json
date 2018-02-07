@@ -2,7 +2,7 @@
   "name": "bma",
   "version": "0.0.1",
   "description": "branch manage abstract",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc"
@@ -15,11 +15,16 @@
   "license": "ISC",
   "dependencies": {
     "@types/chalk": "^2.2.0",
+    "@types/git-remote-origin-url": "^2.0.1",
+    "@types/node": "^9.4.0",
+    "@types/url-parse": "^1.1.0",
     "chalk": "^2.3.0",
+    "git-branch": "^1.0.0",
     "git-remote-origin-url": "^2.0.0",
     "is-git-clean": "^1.1.0",
     "opn": "^5.2.0",
-    "simple-git": "^1.89.0"
+    "simple-git": "^1.89.0",
+    "url-parse": "^1.2.0"
   },
   "devDependencies": {
     "typescript": "^2.7.1"

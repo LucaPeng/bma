@@ -1,62 +1,104 @@
 /**
  * @description 抽象分支管理
- * @author songpeng02
+ * @author lucaPeng
  */
 
-import commandConfig from '../config-manager';
-import remoteToGitURL from '../../utils/remote_to_git_url';
+import {BranchTypes, configManager} from './util/config-manager';
+import {checkIsMajorBranch, checkIsWorkSpaceClean} from './util/checker';
+import remoteToGitURL from './util/remote_to_git_url';
+const currentBranch = require('git-branch');
 const opn = require('opn');
 const gitRemoteOriginUrl = require('git-remote-origin-url');
-const isGitClean = require('is-git-clean');
 const gitP = require('simple-git/promise');
-const git = gitP(process.cwd());
 import chalk from 'chalk';
 
+const git = gitP(process.cwd());
+// 日志打印
+const log = (silence: boolean) => (content: any) => {
+  silence && content && console.log(content);
+};
+
 export default {
-  /**
-   * 检查是否是主干分支
-   * @param branchName {String} 分支名称
-   */
-  async checkIsMajorBranch(branchName: string) {
-    const majorBranches = await commandConfig.getMajorBranches();
-    return majorBranches.indexOf(branchName) > -1;
-  },
-  /**
-   * 检查当前workSpace 是否有未提交的代码
-   */
-  async checkIsWorkSpaceClean() {
-    const clean = await isGitClean();
-    return clean;
+  async newBranch(type: BranchTypes = BranchTypes.feature, id: number | string, config: {silence?: boolean}) {
+    const logger = log(config.silence || false);
+    const prefix = configManager.getPrefix(type);
+    if (!prefix) {
+      console.log(chalk.bgYellow(`no prefix specified for ${type} branch`));
+      process.exit(1);
+    } else {
+      const branchName = `${prefix}-${id}`;
+      const curBranchName = currentBranch.sync();
+      if (await checkIsWorkSpaceClean()) {
+        console.log(chalk.red('uncommitted changes found in current branch, please commit first'));
+        process.exit(1);
+      }
+      try {
+        if (curBranchName !== 'master') {
+          await git.checkout('master').then((res: any) => {
+            logger(chalk.green('切换到master分支'));
+            logger(res);
+          });
+        }
+        await git.pull().then((res: any) => {
+          logger(chalk.green('拉取&更新master分支'));
+          logger(res);
+        });
+        const localBranches = await git.branchLocal();
+        if (localBranches && localBranches.branches && localBranches.branches[branchName]) {
+          logger(chalk.green('任务分支已存在，checkout到对应分支'));
+          return await git.checkout(branchName).then((res: any) => {
+            logger(chalk.green(`已切换到${branchName}分支`));
+            logger(res);
+            return true;
+          });
+        } else {
+          return await git.checkoutLocalBranch(branchName).then((res: any) => {
+            logger(chalk.green(`已创建并切换到${branchName}分支`));
+            logger(res);
+            return git.push(['-u', 'origin', branchName]);
+          }).then((res?: any) => {
+            // 完成任务
+            console.log(chalk.green('推送新创建分支到 remote '));
+            res && console.log(res);
+            return true;
+          });
+        }
+      } catch(err) {
+        console.log(err);
+        return err;
+      }
+    }
   },
   /**
    * 合并master分支到特定分支
    * @param branchName {String} 分支名称
    */
-  async mergeMasterToBranch(branchName: string) {
+  async mergeMasterToBranch(branchName: string, config: {silence?: boolean}) {
+    const logger = log(config.silence || false);
     try {
       return await git.pull().then((res: any) => {
-        console.log(chalk.green('拉取&更新当前开发分支'));
-        res && console.log(res);
+        logger(chalk.green('拉取&更新当前开发分支'));
+        logger(res);
         return git.checkout('master');
       }).then((res: any) => {
-        console.log(chalk.green('切换到master分支'));
-        res && console.log(res);
+        logger(chalk.green('切换到master分支'));
+        logger(res);
         return git.pull();
       }).then((res: any) => {
-        console.log(chalk.green('拉取&更新master分支'));
-        res && console.log(res);
+        logger(chalk.green('拉取&更新master分支'));
+        logger(res);
         return git.checkout(branchName);
       }).then((res: any) => {
-        console.log(chalk.green(`切换到${branchName}开发分支`));
-        res && console.log(res);
+        logger(chalk.green(`切换到${branchName}开发分支`));
+        logger(res);
         return git.merge(['master']);
       }).then((res: any) => {
-        console.log(chalk.green('合并master分支'));
-        res && console.log(res);
+        logger(chalk.green('合并master分支'));
+        logger(res);
         return git.push('origin', branchName);
       }).then((res: any) => {
-        console.log(chalk.green(`推送${branchName}分支到远程代码仓库`));
-        res && console.log(res);
+        logger(chalk.green(`推送${branchName}分支到远程代码仓库`));
+        logger(res);
         return res;
       });
     } catch (err) {
@@ -68,14 +110,14 @@ export default {
   /**
    * 合并分支到特定环境对应的主干分支
    */
-  async mergeBranchToEnv(branchName: string, env: string, config: {mergeMaster: boolean, forceEnvBranch?: string}) {
+  async mergeBranchToEnv(branchName: string, env: string, config: {mergeMaster: boolean, forceEnvBranch?: string, silence?: boolean}) {
     // 获取部署环境对应的分支名
     let envBranch: string;
     if (config.forceEnvBranch) {
       // 如果指定的分支名
       envBranch = config.forceEnvBranch;
     } else {
-      const tempBranchName = await commandConfig.getBranchName(env);
+      const tempBranchName = await configManager.getBranchName(env);
       // 检查是否配置了该环境对应的主干分支
       if (!tempBranchName) {
         envBranch = '';
@@ -87,24 +129,24 @@ export default {
     }
     
     // 检查当前分支是否是主干分支
-    if (await this.checkIsMajorBranch(branchName)) {
+    if (await checkIsMajorBranch(branchName)) {
       console.log(chalk.red('current branch is a major branch, not a feature branch, please check'));
       process.exit(1);
     }
     
     // 检查当前环境是否有未提交的代码
-    if (!await this.checkIsWorkSpaceClean()) {
+    if (!await checkIsWorkSpaceClean()) {
       console.log(chalk.red('uncommitted changes found in current branch, please commit first'));
       process.exit(1);
     }
 
     // 合并master分支到当前分支
     if (config.mergeMaster) {
-      await this.mergeMasterToBranch(branchName);
+      await this.mergeMasterToBranch(branchName, {silence: config.silence});
     }
 
     // 如果禁止直接提交代码到master
-    const enforcePRtoMaster = await commandConfig.getConfig('enforcePRtoMaster');
+    const enforcePRtoMaster = await configManager.getEnforcePRtoMaster();
     if (envBranch === 'master' && enforcePRtoMaster) {
       const remoteOriginUrl = await gitRemoteOriginUrl();
       const gitUrl = remoteToGitURL(remoteOriginUrl, 'git.sankuai', 'create-pr');
@@ -142,5 +184,7 @@ export default {
       process.exit(1);
     }
     return res;
-  }
+  },
+  setConfig: configManager.setConfig,
+  setEnforcePRtoMaster: configManager.setEnforcePRtoMaster
 };

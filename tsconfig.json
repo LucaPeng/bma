@@ -5,10 +5,10 @@
     "outDir": "./dist/.",                        /* Redirect output structure to the directory. */
     "removeComments": true,                /* Do not emit comments to output. */
     "strict": true,                            /* Enable all strict type-checking options. */
-    "rootDir": "src"
+    "rootDir": "src",
+    "allowJs": false
   },
   "include": [
-    "src/**/*.ts",
-    "index.ts"
+    "src/**/*.ts"
   ]
 }
