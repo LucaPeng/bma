@@ -19,6 +19,7 @@ const log = (silence: boolean) => (content: any) => {
 };
 
 module.exports = {
+  BranchTypes: BranchTypes,
   /**
    * 新建任务分支
    * @param type 分支类型
@@ -95,13 +96,13 @@ module.exports = {
    */
   async mergeMasterToBranch(branchName: string, config: {silence?: boolean}) {
     const logger = log(config.silence || false);
-    
+
     // 合法git仓库检查
     if (!await git.checkIsRepo()) {
       console.log(chalk.red('current project has not been initialized as a git repo, please check'));
       return false;
     }
-    
+
     try {
       return await git.pull().then((res: any) => {
         logger(chalk.green('拉取&更新当前开发分支'));
@@ -138,15 +139,14 @@ module.exports = {
    * 合并分支到特定的主干分支
    */
   async mergeToMainBranch(branchName: string, mainBranch: string, config: {mergeMaster: boolean, forceEnvBranch?: string, silence?: boolean}) {
-    
     const logger = log(config.silence || false);
-    
+
     // 合法git仓库检查
     if (!await git.checkIsRepo()) {
       console.log(chalk.red('current project has not been initialized as a git repo, please check'));
       return false;
     }
-    
+
     // 获取部署环境对应的分支名
     let envBranch: string;
     if (config.forceEnvBranch) {

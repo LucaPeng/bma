@@ -21,6 +21,7 @@ const log = (silence) => (content) => {
     !silence && content && console.log(content);
 };
 module.exports = {
+    BranchTypes: config_manager_1.BranchTypes,
     newBranch(type = config_manager_1.BranchTypes.feature, id, config) {
         return __awaiter(this, void 0, void 0, function* () {
             const logger = log(config.silence || false);
