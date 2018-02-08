@@ -35,10 +35,10 @@ module.exports = {
                 return false;
             }
             else {
-                const branchName = `${prefix}-${id}`;
+                const branchName = `${prefix}${id}`;
                 const curBranchName = currentBranch.sync();
-                if (yield checker_1.checkIsWorkSpaceClean()) {
-                    console.log(chalk_1.default.red('uncommitted changes found in current branch, please commit first'));
+                if (!(yield checker_1.checkIsWorkSpaceClean())) {
+                    console.log(chalk_1.default.bgYellow('uncommitted changes found in current branch, please commit first'));
                     return false;
                 }
                 try {
@@ -156,10 +156,10 @@ module.exports = {
             const enforcePRtoMaster = yield config_manager_1.configManager.getEnforcePRtoMaster();
             if (envBranch === 'master' && enforcePRtoMaster) {
                 const remoteOriginUrl = yield gitRemoteOriginUrl();
-                const gitUrl = remote_to_git_url_1.default(remoteOriginUrl, 'git.sankuai', 'create-pr');
+                const gitUrl = remote_to_git_url_1.default(remoteOriginUrl, 'sankuai', 'create-pr');
                 console.log(chalk_1.default.bgYellow('禁止直接合并代码到master分支，请提交PR'));
-                console.log(`地址：${gitUrl}`);
-                opn(gitUrl);
+                console.log(`地址：${gitUrl || '未获得有效url地址，请手动操作'}`);
+                gitUrl && opn(gitUrl);
                 return false;
             }
             try {

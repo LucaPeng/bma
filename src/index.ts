@@ -41,11 +41,11 @@ module.exports = {
       console.log(chalk.bgYellow(`no prefix specified for ${type} branch`));
       return false;
     } else {
-      const branchName = `${prefix}-${id}`;
+      const branchName = `${prefix}${id}`;
       const curBranchName = currentBranch.sync();
       // workspace 无未提交代码检查
-      if (await checkIsWorkSpaceClean()) {
-        console.log(chalk.red('uncommitted changes found in current branch, please commit first'));
+      if (!await checkIsWorkSpaceClean()) {
+        console.log(chalk.bgYellow('uncommitted changes found in current branch, please commit first'));
         return false;
       }
       try {
@@ -185,10 +185,10 @@ module.exports = {
     const enforcePRtoMaster = await configManager.getEnforcePRtoMaster();
     if (envBranch === 'master' && enforcePRtoMaster) {
       const remoteOriginUrl = await gitRemoteOriginUrl();
-      const gitUrl = remoteToGitURL(remoteOriginUrl, 'git.sankuai', 'create-pr');
+      const gitUrl = remoteToGitURL(remoteOriginUrl, 'sankuai', 'create-pr');
       console.log(chalk.bgYellow('禁止直接合并代码到master分支，请提交PR'));
-      console.log(`地址：${gitUrl}`);
-      opn(gitUrl);
+      console.log(`地址：${gitUrl || '未获得有效url地址，请手动操作'}`);
+      gitUrl && opn(gitUrl);
       return false;
     }
 

@@ -19,11 +19,17 @@ export default function (remote: string, gitServe: string = 'sankuai', type: str
   const urlObj = urlParse(remote, true);
   const path = urlObj.pathname;
   const pathes = path && path.substr(1).split('/');
-  const gitName = pathes[2] && pathes[2].split('.')[0];
-  const base = baseMap[gitServe];
   let url = '';
   if (gitServe === 'sankuai') {
-    url = `${base}${pathes[1].toUpperCase()}/repos/${gitName}/${suffixMap[type] || 'browse'}`;
+    const length = pathes.length;
+    if (length >= 2) {
+      const gitName = pathes[length - 1] && pathes[length - 1].split('.')[0];
+      const group = pathes[length - 2];
+      const base = baseMap[gitServe];
+      url = `${base}${group.toUpperCase()}/repos/${gitName}/${suffixMap[type] || 'browse'}`;
+    } else {
+      console.log('解析获取 git url 失败');
+    }
   }
   return url;
 }
