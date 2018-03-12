@@ -1,10 +1,14 @@
 //https://eslint.org/docs/user-guide/configuring
 
 module.exports = {
-  "root": true,
-  "parser": "typescript-eslint-parser",
-  "parserOptions": {
-    "sourceType": "module"
-  },
-  "extends": "@waimai/eslint-config-ofe"
+  root: true,
+  extends: [
+    'eslint-config-mfe/eslintrc.node.js',
+    'eslint-config-mfe/eslintrc.typescript-node.js'
+  ],
+  rules: {
+    indent: [2, 2],
+    'no-console': 0,
+    'no-unused-expressions': 0,
+  }
 };

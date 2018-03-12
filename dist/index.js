@@ -11,14 +11,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const config_manager_1 = require("./util/config-manager");
 const checker_1 = require("./util/checker");
 const remote_to_git_url_1 = require("./util/remote_to_git_url");
+const chalk_1 = require("chalk");
 const currentBranch = require('git-branch');
 const opn = require('opn');
 const gitRemoteOriginUrl = require('git-remote-origin-url');
 const gitP = require('simple-git/promise');
-const chalk_1 = require("chalk");
 const git = gitP(process.cwd());
 const log = (silence) => (content) => {
-    !silence && content && console.log(content);
+    if (!silence && content) {
+        console.log(content);
+    }
 };
 module.exports = {
     BranchTypes: config_manager_1.BranchTypes,
@@ -159,7 +161,9 @@ module.exports = {
                 const gitUrl = remote_to_git_url_1.default(remoteOriginUrl, 'sankuai', 'create-pr');
                 console.log(chalk_1.default.bgYellow('禁止直接合并代码到master分支，请提交PR'));
                 console.log(`地址：${gitUrl || '未获得有效url地址，请手动操作'}`);
-                gitUrl && opn(gitUrl);
+                if (gitUrl) {
+                    opn(gitUrl);
+                }
                 return false;
             }
             try {
@@ -191,6 +195,34 @@ module.exports = {
             }
         });
     },
+    deleteAndUpdateMaster(branchName, config) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const logger = log(config.silence || false);
+            try {
+                if (!(yield checker_1.checkIsWorkSpaceClean())) {
+                    console.log(chalk_1.default.bgYellow('uncommitted changes found in current branch, please commit first'));
+                    return false;
+                }
+                yield git.checkout('master').then((res) => {
+                    logger(res);
+                    logger('checkout to branch master');
+                    return git.deleteLocalBranch(branchName);
+                }).then((res) => {
+                    logger(res);
+                    logger(`local branch ${branchName} deleted`);
+                    return git.pull();
+                }).then((res) => {
+                    logger(res);
+                    logger('local branch master updated');
+                });
+                return true;
+            }
+            catch (err) {
+                console.log(err);
+                return false;
+            }
+        });
+    },
     setConfig: config_manager_1.configManager.setConfig,
-    setEnforcePRtoMaster: config_manager_1.configManager.setEnforcePRtoMaster
+    setEnforcePRtoMaster: config_manager_1.configManager.setEnforcePRtoMaster,
 };

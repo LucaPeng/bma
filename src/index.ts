@@ -6,20 +6,23 @@
 import { BranchTypes, configManager } from './util/config-manager';
 import { checkIsMajorBranch, checkIsWorkSpaceClean } from './util/checker';
 import remoteToGitURL from './util/remote_to_git_url';
+import chalk from 'chalk';
+
 const currentBranch = require('git-branch');
 const opn = require('opn');
 const gitRemoteOriginUrl = require('git-remote-origin-url');
 const gitP = require('simple-git/promise');
-import chalk from 'chalk';
 
 const git = gitP(process.cwd());
 // 日志打印
 const log = (silence: boolean) => (content: any) => {
-  !silence && content && console.log(content);
+  if (!silence && content) {
+    console.log(content);
+  }
 };
 
 module.exports = {
-  BranchTypes: BranchTypes,
+  BranchTypes,
   /**
    * 新建任务分支
    * @param type 分支类型
@@ -188,7 +191,9 @@ module.exports = {
       const gitUrl = remoteToGitURL(remoteOriginUrl, 'sankuai', 'create-pr');
       console.log(chalk.bgYellow('禁止直接合并代码到master分支，请提交PR'));
       console.log(`地址：${gitUrl || '未获得有效url地址，请手动操作'}`);
-      gitUrl && opn(gitUrl);
+      if (gitUrl) {
+        opn(gitUrl);
+      }
       return false;
     }
 
@@ -220,6 +225,39 @@ module.exports = {
       return false;
     }
   },
+
+  /**
+   * 删除分支(本地仓库)并更新主干分支
+   * 操作这一步的前提是认为当前分支已合并到主干分支
+   * @param branchName {string} 分支名
+   * @param config {silence: 是否静默执行}
+   */
+  async deleteAndUpdateMaster(branchName: string, config: {silence?: boolean}) {
+    const logger = log(config.silence || false);
+    // const curBranchName = currentBranch.sync();
+    try {
+      if (!(await checkIsWorkSpaceClean())) {
+        console.log(chalk.bgYellow('uncommitted changes found in current branch, please commit first'));
+        return false;
+      }
+      await git.checkout('master').then((res?: any) => {
+        logger(res);
+        logger('checkout to branch master');
+        return git.deleteLocalBranch(branchName);
+      }).then((res?: any) => {
+        logger(res);
+        logger(`local branch ${branchName} deleted`);
+        return git.pull();
+      }).then((res?: any) => {
+        logger(res);
+        logger('local branch master updated');
+      });
+      return true;
+    } catch (err) {
+      console.log(err);
+      return false;
+    }
+  },
   setConfig: configManager.setConfig,
-  setEnforcePRtoMaster: configManager.setEnforcePRtoMaster
+  setEnforcePRtoMaster: configManager.setEnforcePRtoMaster,
 };
